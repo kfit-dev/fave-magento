@@ -1,0 +1,21 @@
+<?php
+$order = $block->getOrder();
+$formatted_price =  $block->getFormattedPrice();
+$status =  $block->getStatus();
+?>
+<div class="checkout-success">
+    <?php if ($status == "rejected") : ?>
+            <p><?= $block->escapeHtml(__('However, the order was not successful. There was a problem processing the payment of <span>%1</span>.', $formatted_price), ['span']) ?></p>
+            <p><?= $block->escapeHtml(__('Please try again later.'), ['span']) ?></p>
+        <?php else : ?>
+            <p><?= $block->escapeHtml(__('Your order # is: <span>%1</span>.', $order->getIncrementId()), ['span']) ?></p>
+            <p><?= $block->escapeHtml(__('We\'ll email you an order confirmation with details and tracking info.')) ?></p>
+    <?php endif ?>
+ 
+    <div class="actions-toolbar">
+        <div class="primary">
+            <a class="action primary continue" href="<?= $block->escapeUrl($block->getContinueUrl()) ?>"><span><?= $block->escapeHtml(__('Continue Shopping')) ?></span></a>
+        </div>
+    </div>
+</div>
+ 

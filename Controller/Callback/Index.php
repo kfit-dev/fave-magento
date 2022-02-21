@@ -89,8 +89,6 @@ class Index extends \Magento\Framework\App\Action\Action implements CsrfAwareAct
             'status_code' => $statusCode,
             'message' => $comments
         ]);
-
-        exit;
 	}
 
     public function addTransactionToOrder($orderId, $order, $statusCode) {

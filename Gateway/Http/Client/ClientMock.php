@@ -118,7 +118,6 @@ class ClientMock implements ClientInterface
      */
     protected function generateTxnId()
     {
-        //return md5(mt_rand(0, 1000));
         return uniqid('PL-SG');
     }
 
@@ -136,7 +135,7 @@ class ClientMock implements ClientInterface
             return (int)$headers['force_result'];
         }
 
-        return $this->results[mt_rand(0, 1)];
+        return $this->results[random_int(0, 1)];
     }
 
     /**

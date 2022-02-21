@@ -10,7 +10,7 @@ An extension to add integration with Fave Payment Gateway.
 **Step 2: Follow the installation instructions for the extension. The Magento standard is to use composer.**
 
 ```
-composer require fave/module-payment-gateway
+composer require favemy/module-payment-gateway
 composer update
 php bin/magento module:enable fave/module-payment-gateway
 php bin/magento setup:upgrade

@@ -11,7 +11,7 @@ use Fave\PaymentGateway\Gateway\Http\Client\ClientMock;
 /**
  * Class ConfigProvider
  */
-final class ConfigProvider implements ConfigProviderInterface
+class ConfigProvider implements ConfigProviderInterface
 {
     const CODE = 'fave_gateway';
 

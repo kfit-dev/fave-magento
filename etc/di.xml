@@ -84,6 +84,36 @@
             <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
         </arguments>
     </type>
+    <type name="Fave\PaymentGateway\Controller\Fastpay\Request">
+        <arguments>
+            <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+    <type name="Fave\PaymentGateway\Controller\Fastpay\UpdateOrder">
+        <arguments>
+            <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+    <type name="Fave\PaymentGateway\Controller\Fastpay\Shipping">
+        <arguments>
+            <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+    <type name="Fave\PaymentGateway\Block\AddToCart">
+        <arguments>
+            <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+    <type name="Fave\PaymentGateway\Block\Thankyou">
+        <arguments>
+            <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
+        </arguments>
+    </type>
+    <type name="Fave\PaymentGateway\Block\Product\ProductsList">
+        <arguments>
+            <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
+        </arguments>
+    </type>
     <type name="Fave\PaymentGateway\Gateway\Http\Client\ClientMock">
         <arguments>
             <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
@@ -155,5 +185,5 @@
             <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
         </arguments>
     </type>
-
+    <preference for="Magento\CatalogWidget\Block\Product\ProductsList" type="Fave\PaymentGateway\Block\Product\ProductsList" />
 </config>

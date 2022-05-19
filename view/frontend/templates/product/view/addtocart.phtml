@@ -1,0 +1,113 @@
+<?php
+/**
+ * Copyright © Magento, Inc. All rights reserved.
+ * See COPYING.txt for license details.
+ */
+
+/** @var $block \Magento\Catalog\Block\Product\View */
+?>
+<?php
+$base_url = $block->getBaseUrl();
+$_product = $block->getProduct();
+$product_id = $_product->getId();
+$stock_qty = $_product->getExtensionAttributes()->getStockItem()->getQty();
+$product_sku = $_product->getSku();
+$is_fastpay_enabled = $block->isFastPayEnabled();
+$is_promo_messaging_enabled = $block->isPromoMessagingEnabled();
+$cashback_rate = $block->getCashbackRate();
+$country_code = $block->getCountryCode();
+$is_configurable = $_product->getTypeId() == "configurable";
+?>
+<?php $buttonTitle = __('Add to Cart'); ?>
+<?php if ($_product->isSaleable()) :?>
+<div class="box-tocart">
+    <div class="fieldset">
+        <?php if ($block->shouldRenderQuantity()) :?>
+        <div class="field qty">
+            <label class="label" for="qty"><span><?= $block->escapeHtml(__('Qty')) ?></span></label>
+            <div class="control">
+                <input type="number"
+                       name="qty"
+                       id="qty"
+                       min="0"
+                       value="<?= $block->getProductDefaultQty() * 1 ?>"
+                       title="<?= $block->escapeHtmlAttr(__('Qty')) ?>"
+                       class="input-text qty"
+                       data-validate="<?= $block->escapeHtml(json_encode($block->getQuantityValidators())) ?>"
+                       />
+            </div>
+        </div>
+        <?php endif; ?>
+        <div class="actions">
+            <button type="submit"
+                    title="<?= $block->escapeHtmlAttr($buttonTitle) ?>"
+                    class="action primary tocart"
+                    id="product-addtocart-button" disabled>
+                <span><?= $block->escapeHtml($buttonTitle) ?></span>
+            </button>
+            <?= $block->getChildHtml('', true) ?>
+        </div>
+    </div>
+    
+    <?php if ($is_fastpay_enabled == "1") :?>
+        <a class="fastpaybtn action primary tocart">FastPay</a>
+    <?php endif; ?>
+    
+    <?php if ($is_promo_messaging_enabled == "1") :?>
+        <div class='favepay-widget' data-price='99.9' data-cashbackrate="<?= $cashback_rate ?>" data-country="<?= $country_code ?>" data-site='magento' style="margin-top: 20px;">
+            <script src="https://partners.myfave.gdn/js/fpo_promo.js"></script>
+        </div>
+    <?php endif; ?>
+</div>
+
+<?php endif; ?>
+<script type="text/x-magento-init">
+    {
+        "#product_addtocart_form": {
+            "Magento_Catalog/js/validate-product": {}
+        }
+    }
+</script>
+<script type="text/javascript">
+    require([ 'jquery', 'jquery/ui'], function($) { 
+        $(document).ready(function($) {
+            $(document).on("click",".fastpaybtn", function() {
+                var product_id = "<?php echo $product_id;?>";
+                var stock_qty = "<?php echo $stock_qty;?>";
+                var base_url = "<?php echo $base_url;?>";
+                var is_configurable = "<?php echo $is_configurable;?>";
+                var qty = $("#qty").val();
+                var option_id_color = $(".color").attr("data-attribute-id");
+                var option_value_color = $(".color").attr("data-option-selected");
+                var data_attribute_color = $(".color").attr("data-attribute-code");
+                var option_id_size = $(".size").attr("data-attribute-id");
+                var option_value_size = $(".size").attr("data-option-selected");
+                var data_attribute_size = $(".size").attr("data-attribute-code");
+
+                if ((data_attribute_color) && (!option_value_color)) {
+                    return alert("Please select "+ data_attribute_color);
+                }
+
+                if ((data_attribute_size) && (!option_value_size)) {
+                    return alert("Please select "+ data_attribute_size);
+                }
+        
+                var redirect_url = base_url + "paymentgateway/fastpay/request?product_id=" + product_id + "&qty=" + qty;
+
+                if (is_configurable) {
+                    redirect_url = redirect_url + "&op1_id=" + option_id_color + "&op1_value=" + option_value_color + "&op2_id=" + option_id_size +"&op2_value=" + option_value_size;
+                }
+                
+                window.location.href = redirect_url;               
+            });
+        }); 
+    });
+</script>
+<style type="text/css">
+.fastpaybtn {
+    text-align: center;
+    border-color: #c63467 !important;
+    background: #c63467 !important;
+    color: white !important;
+}
+</style>

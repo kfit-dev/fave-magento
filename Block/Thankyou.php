@@ -1,5 +1,7 @@
 <?php
 namespace Fave\PaymentGateway\Block;
+
+use Magento\Payment\Gateway\ConfigInterface;
  
 class Thankyou extends \Magento\Sales\Block\Order\Totals
 {
@@ -9,6 +11,7 @@ class Thankyou extends \Magento\Sales\Block\Order\Totals
     protected $_storeManager;
     protected $_messageManager;
     private $order;
+    private $config;
    
     public function __construct(
         \Magento\Checkout\Model\Session $checkoutSession,
@@ -19,6 +22,7 @@ class Thankyou extends \Magento\Sales\Block\Order\Totals
         \Magento\Store\Model\StoreManagerInterface $storeManager,
         \Magento\Framework\Message\ManagerInterface $messageManager,
         \Magento\Sales\Api\Data\OrderInterface $order,
+        ConfigInterface $config,
         array $data = []
     ) {
         parent::__construct($context, $registry, $data);
@@ -28,6 +32,7 @@ class Thankyou extends \Magento\Sales\Block\Order\Totals
         $this->_storeManager = $storeManager;
         $this->_messageManager = $messageManager;
         $this->order = $order;
+        $this->config = $config;
     }
  
     public function getRealOrderId()
@@ -69,13 +74,28 @@ class Thankyou extends \Magento\Sales\Block\Order\Totals
         //$status_code = isset($additional_info) ? $additional_info['status_code'] : null;
  
         $route_params = $this->getRequest()->getParams();
-        $status = $route_params['status'];
+        $status = isset($route_params['status']) ? $route_params['status'] : null;
        
         if (!empty($status)) {
             if ($status == "rejected") {
               $this->_messageManager->addError('Payment was declined.');
             }
         }
+
+        //Fastpay
+        $omni_ref = isset($route_params['omni_ref']) ? preg_replace('/\s/', '+', $route_params['omni_ref']) : null;
+
+        if (!empty($omni_ref)) {           
+           $store_id = $this->_storeManager->getStore()->getStoreId();
+           $api_key = $this->config->getValue('private_api_key', $store_id);
+           $cipher = "aes-128-cbc";
+           $iv = null;
+   
+           $decrypted_data = openssl_decrypt($omni_ref, $cipher, $api_key, 0, $iv);
+           parse_str($decrypted_data, $query_results); 
+           $status = $query_results['status'];
+        }
+
        return $status;
     }
  

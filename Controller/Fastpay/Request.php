@@ -5,8 +5,6 @@ use Magento\Checkout\Model\Session;
 use Magento\Sales\Model\Order;
 use Magento\Payment\Gateway\ConfigInterface;
 use Magento\Framework\Controller\Result\JsonFactory;
-use Fave\PaymentGateway\Helper\Data;
-use Fave\PaymentGateway\Controller\Fastpay\CustomerToken;
 
 class Request extends \Magento\Framework\App\Action\Action
 {
@@ -19,8 +17,6 @@ class Request extends \Magento\Framework\App\Action\Action
     protected $_product;
     private $checkoutSession;
     private $config;
-    private $helper;
-    private $customerToken;
     private $quoteRepository;
     private $resultJsonFactory;
     
@@ -35,8 +31,6 @@ class Request extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Api\CartRepositoryInterface $quoteRepository,
         \Magento\Catalog\Model\Product $product,
         ConfigInterface $config,
-        Data $helper,
-        CustomerToken $customerToken,
         JsonFactory $resultJsonFactory,
         Session $checkoutSession)
 	{
@@ -48,8 +42,6 @@ class Request extends \Magento\Framework\App\Action\Action
         $this->checkoutSession = $checkoutSession;
         $this->orderRepository = $orderRepository;
         $this->config = $config;
-        $this->helper = $helper;
-        $this->customerToken = $customerToken;
         $this->_product = $product;
         $this->quoteRepository = $quoteRepository;
         $this->resultJsonFactory = $resultJsonFactory;
@@ -58,16 +50,23 @@ class Request extends \Magento\Framework\App\Action\Action
 
 	public function execute()
 	{
+        //====================================================================================================================================
+        //Validations
+        $resultJson = $this->resultJsonFactory->create();
         $store_id = $this->_storeManager->getStore()->getStoreId();
         $is_fastpay_enabled = $this->config->getValue('enable_fastpay', $store_id);
-
+        $private_api_key = $this->config->getValue('merchant_gateway_key', $store_id);
+        $outlet_id = $this->config->getValue('outlet_id', $store_id);
+        
         if ($is_fastpay_enabled != "1") {
-            $resultJson = $this->resultJsonFactory->create();
             return $resultJson->setData(['message' => "FastPay is not enabled. Please enable it in payment settings."]);
         }
-        //=========================================================================================
+
+        if(empty($private_api_key) || empty($outlet_id)) {
+            return $resultJson->setData(['message' => "Please ensure merchant_gateway_key/outlet_id is not empty in payment settings."]);
+        }
+        //====================================================================================================================================
         $order_currency = $this->_storeManager->getStore()->getCurrentCurrency()->getCode();
-        $store_code = $this->_storeManager->getStore()->getCode();
         $store_url = $this->_storeManager->getStore()->getBaseUrl();
         $identifier = strtok(parse_url($store_url)['host'], '.');
         $currency_code = $this->_storeManager->getStore()->getCurrentCurrencyCode();
@@ -141,7 +140,7 @@ class Request extends \Magento\Framework\App\Action\Action
             'order'              => $order_params
         );
 
-		// Generate API signature
+		//Generate API signature
         $params['sign'] = $this->generate_api_signature($params, $store_id);
 
         $result = $this->curl_request($fastpay_endpoint, $params);
@@ -163,7 +162,7 @@ class Request extends \Magento\Framework\App\Action\Action
         //Add product 
         $add_product_url = $store_url . 'index.php/rest/' . $store_code . '/V1/guest-carts/' . $cart_token . '/items';
 
-        //=====================================================================================================
+        //====================================================================================================================================
         //Set configurable product
         $optionsList = array();
         $optionsList[0]['option_id']     = $op1_id;
@@ -206,7 +205,7 @@ class Request extends \Magento\Framework\App\Action\Action
 
         $result = $this->curl_request($add_product_url, $add_product_params);
         $quote_id = isset($result['quote_id']) ? $result['quote_id'] : null;
-        //=====================================================================================================
+        //====================================================================================================================================
         //Add shipping information
         $add_shipping_url = $store_url . 'index.php/rest/' . $store_code . '/V1/guest-carts/' . $cart_token . '/shipping-information';
 
@@ -276,7 +275,7 @@ class Request extends \Magento\Framework\App\Action\Action
         return $resultJson;
     }
 
-    //make request
+    //Make request
     private function curl_request($endpoint, $params = null) {
         $this->_curl->addHeader("Content-Type", "application/json");
 		$this->_curl->post($endpoint, json_encode($params));
@@ -284,7 +283,7 @@ class Request extends \Magento\Framework\App\Action\Action
 		return json_decode($result, true);
     }
 
-	// Generate API signature
+	//Generate API signature
     private function generate_api_signature(array $params, $store_id) {
 
         unset( $params['sign'] );

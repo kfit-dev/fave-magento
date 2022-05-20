@@ -66,19 +66,33 @@ class UpdateOrder extends \Magento\Framework\App\Action\Action implements CsrfAw
 	{
         $post = $this->getRequest()->getContent();
         $array = json_decode($post, true);
-        
+
+        $resultJson = $this->resultJsonFactory->create();
+
         //Get grand total
         $quote_results = $this->get_grand_total($array);
-        
-        $resultJson = $this->resultJsonFactory->create();
-        
-        return $resultJson->setData([
-            'total_amount_cents' => $quote_results['grand_total'] * 100,
-        ]);
+
+        if (array_key_exists('message', $quote_results)) {
+            $resultJson->setHttpResponseCode(\Magento\Framework\Webapi\Exception::HTTP_FORBIDDEN);
+            return $resultJson->setData(['message' => $quote_results['message']]);
+        }
+        else {
+            return $resultJson->setData(['total_amount_cents' => $quote_results['grand_total'] * 100]);
+        }
 	}
 
 
     private function get_grand_total($array) {
+        //==========================================================================================
+        //Validate signature
+        $store_id = $this->_storeManager->getStore()->getStoreId();
+
+        $sign = $this->generate_json_sign($array, $store_id);
+
+        if ($sign != $array['sign']) {
+           return $resultJson = array('message' => "Unauthorized error (Invalid sign).");
+        }
+        //==========================================================================================
         $store_code = $this->_storeManager->getStore()->getCode();
         $store_url = $this->_storeManager->getStore()->getBaseUrl();
         $currency_code = $this->_storeManager->getStore()->getCurrentCurrencyCode();
@@ -92,8 +106,8 @@ class UpdateOrder extends \Magento\Framework\App\Action\Action implements CsrfAw
         $shipping_state = $array['shipping_address']['state'];
         $shipping_postcode = $array['shipping_address']['postcode'];
         $shipping_country = $array['shipping_address']['country'];
-        $shipping_email = $array['shipping_address']['email'];
-        $shipping_phone = $array['shipping_address']['phone'];
+        $shipping_email = array_key_exists('email', $array['shipping_address']) ? $array['shipping_address']['email'] : null;
+        $shipping_phone = array_key_exists('phone', $array['shipping_address']) ? $array['shipping_address']['phone'] : null;
 
         $billing_first_name = $array['billing_address']['first_name'];
         $billing_last_name = $array['billing_address']['last_name'];
@@ -103,8 +117,8 @@ class UpdateOrder extends \Magento\Framework\App\Action\Action implements CsrfAw
         $billing_state = $array['billing_address']['state'];
         $billing_postcode = $array['billing_address']['postcode'];
         $billing_country = $array['billing_address']['country'];
-        $billing_email = $array['billing_address']['email'];
-        $billing_phone = $array['billing_address']['phone'];
+        $billing_email = array_key_exists('email', $array['billing_address']) ? $array['billing_address']['email'] : null;
+        $billing_phone = array_key_exists('phone', $array['billing_address']) ? $array['billing_address']['phone'] : null;
 
         $shipping_line_id = $array['shipping_line']['id'];
         $shipping_line_method_id = $array['shipping_line']['method_id'];
@@ -187,7 +201,7 @@ class UpdateOrder extends \Magento\Framework\App\Action\Action implements CsrfAw
         $order->setCustomerFirstname($billing_first_name);
         $order->setCustomerLastname($billing_last_name);
         
-        // set totals
+        //Set totals
         $order->setBaseGrandTotal($result['totals']['base_grand_total']);
         $order->setGrandTotal($grand_total);
         $order->setBaseSubtotal($result['totals']['base_subtotal']);
@@ -201,7 +215,7 @@ class UpdateOrder extends \Magento\Framework\App\Action\Action implements CsrfAw
         $order->setTotalItemCount($qty);
         $order->setTotalQtyOrdered($qty);
 
-        // set shipping amounts
+        //Set shipping amounts
         $order->setShippingAmount($shipping_amount);
         $order->setBaseShippingAmount($result['totals']['base_shipping_amount']);
         $order->setShippingTaxAmount($result['totals']['base_shipping_tax_amount']);
@@ -254,12 +268,24 @@ class UpdateOrder extends \Magento\Framework\App\Action\Action implements CsrfAw
         return $resultJson;
     }
 
-    //make request
+    //Make request
     private function curl_request($endpoint, $params = null) {
         $this->_curl->addHeader("Content-Type", "application/json");
 		$this->_curl->post($endpoint, json_encode($params));
 		$result = $this->_curl->getBody();
 		return json_decode($result, true);
+    }
+
+    //Generate json signature
+    private function generate_json_sign(array $params, $store_id) {
+
+        unset( $params['sign'] );
+
+        $json = json_encode( $params, JSON_UNESCAPED_SLASHES );
+        $api_key = $this->config->getValue('private_api_key', $store_id);
+
+        return hash_hmac( 'sha256', $json, $api_key );
+
     }
 
     public function createCsrfValidationException(RequestInterface $request): ? InvalidRequestException

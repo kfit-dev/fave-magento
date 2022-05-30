@@ -71,9 +71,13 @@ $is_configurable = $_product->getTypeId() == "configurable";
 <script type="text/javascript">
     require([ 'jquery', 'jquery/ui'], function($) { 
         $(document).ready(function($) {
-            var $is_fastpay_enabled = "<?php echo $is_fastpay_enabled;?>";
-            console.log($is_fastpay_enabled);
-            console.log("test");
+            var is_fastpay_enabled = "<?php echo $is_fastpay_enabled;?>";
+            var is_promo_messaging_enabled = "<?php echo $is_promo_messaging_enabled;?>";
+            var cashback_rate = "<?php echo $cashback_rate;?>";
+            console.log("is_fastpay_enabled: " + is_fastpay_enabled);
+            console.log("is_promo_messaging_enabled: " + is_promo_messaging_enabled);
+            console.log("cashback_rate: " + cashback_rate);
+
             $(document).on("click",".fastpaybtn", function() {
                 var product_id = "<?php echo $product_id;?>";
                 var stock_qty = "<?php echo $stock_qty;?>";

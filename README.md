@@ -19,7 +19,7 @@ php bin/magento setup:static-content:deploy -f
 php bin/magento cache:clean
 ```
 
-**Step 3: After installation, you can verify the extenstion is successfully installed by running the following command.**
+**Step 3: After installation, you can verify the extension is successfully installed by running the following command.**
 
 `php bin/magento module:status favemy/module-payment-gateway`
 

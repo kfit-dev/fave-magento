@@ -74,6 +74,11 @@
             <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
         </arguments>
     </type>
+    <type name="Fave\PaymentGateway\Controller\Index\Test">
+        <arguments>
+            <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
+        </arguments>
+    </type>
     <type name="Fave\PaymentGateway\Controller\Callback\Index">
         <arguments>
             <argument name="config" xsi:type="object">PaymentGatewayConfig</argument>
